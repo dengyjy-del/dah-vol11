@@ -329,7 +329,7 @@ const Header=()=>{
   const navItems=[{id:'about',label:'О проекте'},{id:'objects',label:'Объекты'},{id:'map',label:'Карта'},{id:'needs',label:'Потребности'},{id:'workflow',label:'Процесс'},{id:'guides',label:'Инструкции'}];
   return(
     <header className={`site-header ${scrolled?'scrolled':''}`}><div className="header-inner">
-      <a className="logo" onClick={()=>{navigate('home');setMenuOpen(false)}}><div className="logo-dot"></div><span className="logo-text">ЦАН</span></a>
+      <a className="logo" onClick={()=>{navigate('home');setMenuOpen(false)}}><div className="logo-dot"></div><span className="logo-text">Цифровое Архитектурное Наследие</span></a>
       <nav className={`nav ${menuOpen?'open':''}`}>
         {navItems.map(i=><a key={i.id} className={`nav-link ${currentPage===i.id?'active':''}`} onClick={()=>{navigate(i.id);setMenuOpen(false)}}>{i.label}</a>)}
         <a className="btn btn-pill" onClick={()=>{openModal('participate');setMenuOpen(false)}}>Присоединиться</a>
