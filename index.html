@@ -176,6 +176,18 @@
 </head>
 <body>
 <div id="root"></div>
+<div id="error-display" style="display:none;position:fixed;top:0;left:0;right:0;padding:20px;background:#ff4444;color:white;font-family:monospace;z-index:9999;white-space:pre-wrap;font-size:14px;max-height:50vh;overflow:auto"></div>
+<script>
+window.onerror = function(msg, url, line, col, err) {
+  var el = document.getElementById('error-display');
+  if(el) { el.style.display='block'; el.textContent += 'ERROR: ' + msg + '\nLine: ' + line + '\nCol: ' + col + '\n' + (err && err.stack ? err.stack : '') + '\n\n'; }
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  var el = document.getElementById('error-display');
+  if(el) { el.style.display='block'; el.textContent += 'PROMISE ERROR: ' + e.reason + '\n\n'; }
+});
+</script>
 <script type="text/babel">
 const {useState,useEffect,createContext,useContext,useRef,useCallback}=React;
 
@@ -184,7 +196,7 @@ function mulberry32(a){return function(){let t=(a+=0x6d2b79f5);t=Math.imul(t^(t>
 function buildHeritageSilhouette(seed){
   const r=mulberry32(seed),g=new THREE.Group();
   const bW=5+r()*2,bD=2+r()*1.2,bH=.55+r()*.25;
-  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(bW,bH,bD)),{position:new THREE.Vector3(0,bH/2,0)}));
+  const base=new THREE.Mesh(new THREE.BoxGeometry(bW,bH,bD));base.position.y=bH/2;g.add(base);
   const yW=bW*(.62+r()*.08),yD=bD*(.7+r()*.15),yH=1.3+r()*.7;
   const body=new THREE.Mesh(new THREE.BoxGeometry(yW,yH,yD));body.position.y=bH+yH/2;g.add(body);
   const cols=10+Math.floor(r()*6),cW=.08+r()*.05,cH=yH*.75,cG=new THREE.BoxGeometry(cW,cH,cW);
@@ -218,7 +230,7 @@ const objectsData=[
     materials:{foundation:"Бутовый камень на известковом растворе, бетон",walls:"Красный глиняный кирпич высокого обжига (клеймёный), цепная кладка",floors:"Сводчатые (кирпичные) по металлическим балкам (двутавры)",roof:"Скатная, металлическая по деревянным и металлическим стропилам"},
     coords:[59.9553,30.3715],needs:["scanning","modeling","funding"],
     photos:["photos/kresty_1.jpg","photos/kresty_2.jpg","photos/kresty_3.jpg"]},
-  {id:103,name:"Петропавловская крепость",shortName:"Петропавловская крепость",category:"Крепость",region:"Санкт-Петербург",district:"Петроградский район",address:"Заячий остров, д. 3",date:"1703–1740 гг.",architects:"Доменико Трезини, Б.К. Миних, Н.А. Львов, Д.И. Журавский",style:"Петровское барокко, Классицизм",status:"good",statusText:"Хорошее / Музейное",lossPercent:"<5%",protection:"Федерального значения (ЮНЕСКО)",regNumber:"781510323300006",owner:"Город Санкт-Петербург / Российская Федерация",digitizationLevel:2,
+  {id:103,name:"Петропавловская крепость",shortName:"Петропавловская крепость",category:"Крепость",region:"Санкт-Петербург",district:"Петроградский район",address:"Заячий остров, д. 3",date:"1703–1740 гг.",architects:"Доменико Трезини, Б.К. Миних, Н.А. Львов, Д.И. Журавский",style:"Петровское барокко, Классицизм",status:"good",statusText:"Хорошее / Музейное",lossPercent:"менее 5%",protection:"Федерального значения (ЮНЕСКО)",regNumber:"781510323300006",owner:"Город Санкт-Петербург / Российская Федерация",digitizationLevel:2,
     description:"Главный парадокс Санкт-Петербурга. Крепость строили в безумной спешке, ожидая шведского нападения. Петр I лично таскал землю, люди умирали тысячами, чтобы создать идеальную фортификацию звёздчатого типа. Но когда её достроили, граница отошла на север, и пушки крепости ни разу не выстрелили по врагу. Вместо защиты города крепость стала «Русской Бастилией» — здесь сидели от царевича Алексея и Достоевского до Троцкого и брата Ленина.",
     threats:["Водная эрозия и ледоход","Выпадение гранитных блоков","Грунтовые воды (риск гниения лиственничных свай)","Антропогенная нагрузка (туристы, концерты, салюты)"],
     materials:{foundation:"Ленточный бутовый на свайном основании (тысячи лиственничных свай)",walls:"Кирпичная кладка (толщина до 20 м), облицовка гранитом рапакиви",spire:"Металлический каркас (с 1858 г.), медные листы с гальваническим золочением, 122.5 м",engineering:"Историческая дренажная система, потерны (кирпичные своды)"},
