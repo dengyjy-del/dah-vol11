@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Цифровое Архитектурное Наследие России</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root{color-scheme:light}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#0B0B0E;line-height:1.6;overflow-x:hidden;background:#F6F7FB}
+    .bg-grid{position:relative;min-height:100dvh;background:radial-gradient(1200px 800px at 20% 10%,rgba(245,71,56,.10),transparent 60%),radial-gradient(900px 700px at 90% 30%,rgba(0,0,0,.06),transparent 60%),linear-gradient(180deg,#fff,#F6F7FB)}
+    .noise{position:absolute;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");mix-blend-mode:multiply;opacity:.12}
+    .hero-bg{background:radial-gradient(900px 520px at 15% 20%,rgba(245,71,56,.14),transparent 62%),radial-gradient(800px 520px at 75% 30%,rgba(0,0,0,.08),transparent 66%),linear-gradient(120deg,rgba(255,255,255,.85),rgba(255,255,255,.55))}
+    .vignette{background:radial-gradient(90% 70% at 50% 30%,transparent 20%,rgba(0,0,0,.06) 75%,rgba(0,0,0,.10) 100%)}
+    .container{max-width:1152px;margin:0 auto;padding:0 20px}
+    .glass-card{border-radius:1.25rem;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.65);box-shadow:0 10px 35px rgba(0,0,0,.10);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:.75rem;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.60);padding:8px 16px;font-size:14px;color:rgba(11,11,14,.85);transition:all .2s;cursor:pointer;font-family:inherit;text-decoration:none;white-space:nowrap}
+    .btn:hover{color:#0B0B0E;border-color:rgba(0,0,0,.20);background:#fff}
+    .btn-solid{background:#F54738;color:#fff;border-color:transparent;box-shadow:0 12px 35px rgba(245,71,56,.25)}
+    .btn-solid:hover{filter:brightness(1.1);color:#fff}
+    .btn-ghost{background:rgba(0,0,0,.05)}
+    .btn-pill{border-radius:9999px;background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.10)}
+    .badge{display:inline-flex;align-items:center;border-radius:9999px;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.70);padding:4px 10px;font-size:12px;color:rgba(11,11,14,.70)}
+    .badge.critical{background:rgba(245,71,56,.12);color:#c0392b;border-color:rgba(245,71,56,.2)}
+    .badge.warning{background:rgba(241,196,15,.15);color:#856404;border-color:rgba(241,196,15,.3)}
+    .badge.good{background:rgba(39,174,96,.12);color:#1e8449;border-color:rgba(39,174,96,.2)}
+    .input{width:100%;border-radius:.75rem;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.80);padding:12px 16px;font-size:14px;color:rgba(11,11,14,.90);outline:none;font-family:inherit;transition:border-color .2s}
+    .input::placeholder{color:rgba(11,11,14,.40)}
+    .input:focus{border-color:rgba(0,0,0,.20)}
+    textarea.input{min-height:100px;resize:vertical}
+    select.input{cursor:pointer}
+    /* HEADER */
+    .site-header{position:sticky;top:0;z-index:40;border-bottom:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.70);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:box-shadow .3s}
+    .site-header.scrolled{box-shadow:0 4px 20px rgba(0,0,0,.06)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:1152px;margin:0 auto}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer}
+    .logo-dot{width:10px;height:10px;border-radius:9999px;background:#F54738;box-shadow:0 0 18px rgba(245,71,56,.65);flex-shrink:0}
+    .logo-text{font-size:14px;font-weight:600;letter-spacing:-.01em;color:rgba(11,11,14,.90)}
+    .nav{display:flex;align-items:center;gap:24px}
+    .nav-link{font-size:14px;color:rgba(11,11,14,.70);text-decoration:none;transition:color .2s;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+    .nav-link:hover,.nav-link.active{color:#0B0B0E}
+    .mobile-toggle{display:none;background:none;border:none;font-size:24px;cursor:pointer;color:#0B0B0E;padding:4px 8px}
+    @media(max-width:768px){
+      .nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);padding:16px 20px;gap:12px;border-bottom:1px solid rgba(0,0,0,.10)}
+      .nav.open{display:flex}
+      .mobile-toggle{display:block}
+    }
+    /* SECTIONS */
+    .section-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(11,11,14,.55)}
+    .section-title{margin-top:8px;font-size:clamp(1.75rem,4vw,2.5rem);font-weight:600;letter-spacing:-.02em;line-height:1.1}
+    .section-desc{margin-top:12px;max-width:48rem;color:rgba(11,11,14,.70);font-size:15px}
+    .section-header{margin-bottom:24px}
+    /* HERO */
+    .hero-section{position:relative;overflow:hidden;border-radius:1rem;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.65);box-shadow:0 20px 60px rgba(0,0,0,.10)}
+    .hero-content{position:relative;padding:56px 24px}
+    @media(min-width:769px){.hero-content{padding:80px 48px;padding-right:420px}}
+    .hero-pill{display:inline-flex;align-items:center;gap:8px;border-radius:9999px;border:1px solid rgba(0,0,0,.10);background:rgba(0,0,0,.05);padding:4px 12px;font-size:12px;color:rgba(11,11,14,.70)}
+    .hero-pill-dot{width:6px;height:6px;border-radius:9999px;background:#F54738}
+    .hero-title{margin-top:24px;font-size:clamp(2rem,6vw,4.5rem);font-weight:600;letter-spacing:-.03em;line-height:.95}
+    .hero-title span{color:rgba(11,11,14,.60)}
+    .hero-subtitle{margin-top:20px;font-size:clamp(14px,2vw,18px);color:rgba(11,11,14,.70);max-width:640px}
+    .hero-buttons{margin-top:28px;display:flex;flex-wrap:wrap;gap:12px}
+    .hero-3d-card{position:absolute;right:24px;top:24px;width:380px;border-radius:1rem;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.70);padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.10)}
+    @media(max-width:768px){.hero-3d-card{display:none}}
+    .hero-3d-header{display:flex;justify-content:space-between;font-size:12px;color:rgba(11,11,14,.60)}
+    .hero-3d-viewer{margin-top:12px;height:240px;overflow:hidden;border-radius:.75rem;border:1px solid rgba(0,0,0,.10);background:#fff}
+    .hero-stats{margin-top:40px;display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    @media(max-width:600px){.hero-stats{grid-template-columns:1fr}}
+    /* GRIDS */
+    .cards-grid{display:grid;gap:16px}
+    .cards-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+    .cards-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+    .cards-grid.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media(max-width:900px){.cards-grid.cols-3,.cards-grid.cols-4{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.cards-grid.cols-2,.cards-grid.cols-3,.cards-grid.cols-4{grid-template-columns:1fr}}
+    .object-card{cursor:pointer;transition:transform .2s,box-shadow .2s}
+    .object-card:hover{transform:translateY(-2px);box-shadow:0 20px 50px rgba(0,0,0,.12)}
+    /* PHOTO */
+    .photo-placeholder{position:relative;overflow:hidden;border-radius:.75rem;border:1px solid rgba(0,0,0,.08)}
+    .photo-placeholder img{width:100%;height:100%;object-fit:cover;display:block}
+    .photo-placeholder .photo-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,rgba(0,0,0,.08) 50%,transparent 100%)}
+    .photo-placeholder .photo-badge{position:absolute;top:10px;left:10px;z-index:2}
+    .photo-placeholder .photo-type{position:absolute;bottom:10px;left:12px;font-size:12px;color:rgba(255,255,255,.75);z-index:2}
+    .photo-placeholder .photo-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+    /* PHOTO GALLERY */
+    .photo-gallery{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;padding-bottom:4px}
+    .photo-gallery::-webkit-scrollbar{height:4px}
+    .photo-gallery::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:2px}
+    .photo-gallery-item{flex:0 0 auto;width:calc(33.333% - 6px);min-width:120px;height:100px;border-radius:.5rem;overflow:hidden;border:1px solid rgba(0,0,0,.08);cursor:pointer;scroll-snap-align:start;position:relative}
+    .photo-gallery-item img{width:100%;height:100%;object-fit:cover}
+    .photo-gallery-item.active{border-color:#F54738;border-width:2px}
+    /* 3D VIEWER */
+    .viewer-3d{position:relative;overflow:hidden;border-radius:.75rem;border:1px solid rgba(0,0,0,.10);background:#fafbfe}
+    .viewer-3d canvas{width:100%!important;height:100%!important;display:block}
+    .viewer-label{position:absolute;top:10px;right:12px;font-size:10px;color:rgba(11,11,14,.40);text-transform:uppercase;letter-spacing:.05em;pointer-events:none}
+    .viewer-label-left{position:absolute;top:10px;left:12px;font-size:12px;font-weight:600;color:rgba(11,11,14,.75);pointer-events:none}
+    /* MAP */
+    .map-wrapper{height:500px;border-radius:.75rem;overflow:hidden;border:1px solid rgba(0,0,0,.10)}
+    .map-wrapper.fullpage{height:70vh;min-height:400px}
+    #map{width:100%;height:100%}
+    .leaflet-control-attribution{font-size:10px!important}
+    .leaflet-control-attribution a[href*="leafletjs"]{display:none!important}
+    /* FOOTER */
+    .site-footer{border-top:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.60)}
+    .footer-inner{max-width:1152px;margin:0 auto;padding:40px 20px}
+    .footer-top{display:flex;flex-direction:column;gap:24px}
+    @media(min-width:769px){.footer-top{flex-direction:row;align-items:center;justify-content:space-between}}
+    .footer-brand-text{font-size:14px;font-weight:600;color:rgba(11,11,14,.90)}
+    .footer-brand-desc{margin-top:8px;font-size:14px;color:rgba(11,11,14,.60);max-width:480px}
+    .footer-links-row{display:flex;flex-wrap:wrap;gap:12px}
+    .footer-copy{margin-top:32px;font-size:12px;color:rgba(11,11,14,.50)}
+    /* MODAL */
+    .modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.40);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal{background:#fff;border-radius:1.25rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.20)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid rgba(0,0,0,.08)}
+    .modal-title{font-size:18px;font-weight:600}
+    .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:rgba(11,11,14,.5);padding:0 4px}
+    .modal-body{padding:24px}
+    .form-group{margin-bottom:16px}
+    .form-label{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:rgba(11,11,14,.70)}
+    .notification{position:fixed;top:24px;right:24px;z-index:200;background:#0B0B0E;color:#fff;padding:14px 20px;border-radius:.75rem;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.20);animation:slideInRight .3s ease}
+    .notification.success{background:#27ae60}
+    @keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+    /* FAQ */
+    .faq-item{border:1px solid rgba(0,0,0,.10);border-radius:1rem;background:rgba(255,255,255,.65);backdrop-filter:blur(8px);margin-bottom:12px;overflow:hidden}
+    .faq-question{padding:18px 20px;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s}
+    .faq-question:hover{background:rgba(0,0,0,.02)}
+    .faq-icon{font-size:20px;color:rgba(11,11,14,.40);transition:transform .2s;font-weight:300}
+    .faq-item.open .faq-icon{transform:rotate(45deg)}
+    .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease}
+    .faq-item.open .faq-answer{max-height:500px}
+    .faq-answer-inner{padding:0 20px 18px;font-size:14px;color:rgba(11,11,14,.70);line-height:1.7}
+    /* FILTERS */
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+    .filter-btn{padding:8px 16px;border-radius:9999px;border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.60);font-size:13px;color:rgba(11,11,14,.70);cursor:pointer;transition:all .2s;font-family:inherit}
+    .filter-btn:hover{border-color:rgba(0,0,0,.20)}
+    .filter-btn.active{background:#0B0B0E;color:#fff;border-color:#0B0B0E}
+    .search-box{display:flex;gap:12px;margin-bottom:24px}
+    .search-input{flex:1;padding:12px 16px;border:1px solid rgba(0,0,0,.10);border-radius:.75rem;font-size:14px;background:rgba(255,255,255,.80);font-family:inherit;outline:none;transition:border-color .2s}
+    .search-input:focus{border-color:rgba(0,0,0,.20)}
+    .digit-bar{display:flex;gap:6px;margin:16px 0 8px}
+    .digit-level{flex:1;height:6px;background:rgba(0,0,0,.08);border-radius:4px}
+    .digit-level.active{background:#F54738}
+    .digit-labels{display:flex;justify-content:space-between;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(11,11,14,.50)}
+    .contact-grid{display:grid;gap:24px;grid-template-columns:1fr 1fr}
+    @media(max-width:768px){.contact-grid{grid-template-columns:1fr}}
+    .page-top{padding-top:40px;padding-bottom:64px}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .anim-fade{animation:fadeUp .7s ease both}
+    .anim-d1{animation-delay:.05s}.anim-d2{animation-delay:.10s}.anim-d3{animation-delay:.15s}
+    .anim-d4{animation-delay:.20s}.anim-d5{animation-delay:.25s}.anim-d6{animation-delay:.30s}
+    .empty-state{text-align:center;padding:80px 24px}
+    .empty-title{font-size:22px;font-weight:600;margin-bottom:8px}
+    .empty-desc{font-size:14px;color:rgba(11,11,14,.60)}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(11,11,14,.15);border-radius:3px}
+    .detail-grid{display:grid;gap:20px;grid-template-columns:3fr 2fr}
+    @media(max-width:768px){.detail-grid{grid-template-columns:1fr}}
+    /* MOBILE SPECIFIC */
+    @media(max-width:600px){
+      .container{padding:0 16px}
+      .hero-content{padding:32px 16px!important}
+      .hero-title{font-size:clamp(1.8rem,8vw,3rem)}
+      .hero-buttons .btn{width:100%}
+      .hero-stats{gap:10px}
+      .section-title{font-size:clamp(1.4rem,5vw,2rem)}
+      .glass-card{border-radius:1rem}
+      .photo-gallery-item{min-width:100px;height:80px}
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,createContext,useContext,useRef,useCallback}=React;
+
+// ═══════════ THREE.JS HERITAGE BUILDER ═══════════
+function mulberry32(a){return function(){let t=(a+=0x6d2b79f5);t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+function buildHeritageSilhouette(seed){
+  const r=mulberry32(seed),g=new THREE.Group();
+  const bW=5+r()*2,bD=2+r()*1.2,bH=.55+r()*.25;
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(bW,bH,bD)),{position:new THREE.Vector3(0,bH/2,0)}));
+  const yW=bW*(.62+r()*.08),yD=bD*(.7+r()*.15),yH=1.3+r()*.7;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(yW,yH,yD));body.position.y=bH+yH/2;g.add(body);
+  const cols=10+Math.floor(r()*6),cW=.08+r()*.05,cH=yH*.75,cG=new THREE.BoxGeometry(cW,cH,cW);
+  for(let i=0;i<cols;i++){const c=new THREE.Mesh(cG);const t=cols<=1?0:i/(cols-1);c.position.set(-yW/2+t*yW,bH+cH/2,yD/2+.02);g.add(c)}
+  const rH=.35+r()*.25,roof=new THREE.Mesh(new THREE.ConeGeometry(yW*.55,rH,4));roof.rotation.y=Math.PI/4;roof.position.y=bH+yH+rH/2;g.add(roof);
+  const v=seed%3;
+  if(v===0){const d=new THREE.Mesh(new THREE.SphereGeometry(.65+r()*.25,22,18));d.position.set(0,bH+yH+.6,0);g.add(d);const s=new THREE.Mesh(new THREE.CylinderGeometry(.03,.06,.8,12));s.position.set(0,bH+yH+1.25,0);g.add(s)}
+  else if(v===1){const t=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,1.6,14));t.position.set(yW*.28,bH+yH+.8,-.1);g.add(t);const c=new THREE.Mesh(new THREE.ConeGeometry(.45,.7,16));c.position.set(yW*.28,bH+yH+1.75,-.1);g.add(c)}
+  else{for(let i=0;i<3;i++){const d=new THREE.Mesh(new THREE.SphereGeometry(.35+r()*.12,18,14));d.position.set((-.6+i*.6)*(1+r()*.2),bH+yH+.45,.05);g.add(d)}}
+  const wW=bW*(.28+r()*.1),wH=bH+yH*(.55+r()*.2),wD=bD*(.5+r()*.2),wG=new THREE.BoxGeometry(wW,wH,wD);
+  const l=new THREE.Mesh(wG);l.position.set(-bW/2+wW/2,wH/2,-.1);g.add(l);
+  const ri=new THREE.Mesh(wG);ri.position.set(bW/2-wW/2,wH/2,-.1);g.add(ri);
+  const box=new THREE.Box3().setFromObject(g),c=box.getCenter(new THREE.Vector3());g.position.sub(c);return g;
+}
+
+// ═══════════ PHOTO GRADIENTS ═══════════
+const photoGradients=['linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)','linear-gradient(135deg,#2c3e50 0%,#34495e 40%,#5d6d7e 100%)','linear-gradient(135deg,#0c0c0c 0%,#1e272e 40%,#485460 100%)','linear-gradient(135deg,#2d3436 0%,#636e72 60%,#b2bec3 100%)','linear-gradient(135deg,#2c2c54 0%,#474787 50%,#706fd3 100%)','linear-gradient(135deg,#1b1b1b 0%,#2d2d2d 40%,#4a4a4a 100%)','linear-gradient(135deg,#192a56 0%,#273c75 50%,#40739e 100%)','linear-gradient(135deg,#2c3e50 0%,#2980b9 50%,#6dd5fa 100%)','linear-gradient(135deg,#232526 0%,#414345 50%,#636e72 100%)','linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%)'];
+
+// ═══════════ DATA — 10 OBJECTS ═══════════
+const objectsData=[
+  // --- 3 NEW OBJECTS (FIRST) ---
+  {id:101,name:"Александровский институт",shortName:"Александровский институт",category:"Институт",region:"Санкт-Петербург",district:"Центральный район",address:"ул. Смольного, д. 3, лит. А",date:"1821–1829 гг.",architects:"П.И. Хаберцеттель, Д.И. Гримм, Р.А. Гедике",style:"Поздний классицизм (Ампир)",status:"good",statusText:"Отличное (Эксплуатируемое)",lossPercent:"~40% (Интерьеры)",protection:"Федерального значения",regNumber:"781510309730005",owner:"Субъект РФ (Санкт-Петербург)",digitizationLevel:1,
+    description:"«Золушки» петербургского света. Все знают соседний Смольный институт, где учились дочери графов и князей. А это здание, стоящее полукругом перед монастырём, было местом для «второго сорта» — Мещанское училище, позже Александровский институт. Сюда принимали дочерей купцов, чиновников и разорившихся дворян. Архитектура здания идеально отражает эту суровую задачу — строгий, даже казарменный классицизм. Это памятник женскому образованию, которое давало профессию, а не просто светский лоск.",
+    threats:["Утрата подлинности при «евроремонте»","Вибрация от транспорта"],
+    materials:{foundation:"Бутовый (известняковая плита) на известковом растворе",walls:"Красный глиняный кирпич, штукатурка, окраска в светло-жёлтый цвет",roof:"Металлическая (оцинкованная сталь), скатная, по деревянным стропилам",interiors:"Утрачены домовая церковь, спальни. Сохранены элементы вестибюлей (лепнина, колонны)"},
+    coords:[59.9488,30.3953],needs:["scanning","modeling"],
+    photos:["photos/aleksandrovsky_1.jpg","photos/aleksandrovsky_2.jpg","photos/aleksandrovsky_3.jpg"]},
+  {id:102,name:"СИЗО «Кресты»",shortName:"СИЗО «Кресты»",category:"Тюрьма",region:"Санкт-Петербург",district:"Центральный район",address:"Арсенальная наб., д. 7",date:"1884–1892 гг.",architects:"А.О. Томишко",style:"Кирпичный стиль (Эклектика)",status:"warning",statusText:"Удовлетворительное / Законсервированное",lossPercent:"~15% конструктив / >60% интерьеры",protection:"Регионального значения",regNumber:"781610411370005",owner:"АО «ДОМ.РФ»",digitizationLevel:1,
+    description:"Самый мрачный архитектурный шедевр Петербурга. «Кресты» — это идеальная машина для наблюдения, воплощённая в красном кирпиче. Архитектор Антоний Томишко построил этот комплекс по системе «Паноптикум»: из центра креста охранник мог видеть все четыре коридора сразу. Через эти стены прошёл весь цвет нации: от маршала Рокоссовского и Льва Гумилёва до Иосифа Бродского. Здесь Анна Ахматова стояла в очередях с передачками, о чём написала в «Реквиеме».",
+    threats:["Сложность адаптации (узкие камеры 8 м²)","Температурный режим после отключения отопления","Вандализм в период «безвременья»"],
+    materials:{foundation:"Бутовый камень на известковом растворе, бетон",walls:"Красный глиняный кирпич высокого обжига (клеймёный), цепная кладка",floors:"Сводчатые (кирпичные) по металлическим балкам (двутавры)",roof:"Скатная, металлическая по деревянным и металлическим стропилам"},
+    coords:[59.9553,30.3715],needs:["scanning","modeling","funding"],
+    photos:["photos/kresty_1.jpg","photos/kresty_2.jpg","photos/kresty_3.jpg"]},
+  {id:103,name:"Петропавловская крепость",shortName:"Петропавловская крепость",category:"Крепость",region:"Санкт-Петербург",district:"Петроградский район",address:"Заячий остров, д. 3",date:"1703–1740 гг.",architects:"Доменико Трезини, Б.К. Миних, Н.А. Львов, Д.И. Журавский",style:"Петровское барокко, Классицизм",status:"good",statusText:"Хорошее / Музейное",lossPercent:"<5%",protection:"Федерального значения (ЮНЕСКО)",regNumber:"781510323300006",owner:"Город Санкт-Петербург / Российская Федерация",digitizationLevel:2,
+    description:"Главный парадокс Санкт-Петербурга. Крепость строили в безумной спешке, ожидая шведского нападения. Петр I лично таскал землю, люди умирали тысячами, чтобы создать идеальную фортификацию звёздчатого типа. Но когда её достроили, граница отошла на север, и пушки крепости ни разу не выстрелили по врагу. Вместо защиты города крепость стала «Русской Бастилией» — здесь сидели от царевича Алексея и Достоевского до Троцкого и брата Ленина.",
+    threats:["Водная эрозия и ледоход","Выпадение гранитных блоков","Грунтовые воды (риск гниения лиственничных свай)","Антропогенная нагрузка (туристы, концерты, салюты)"],
+    materials:{foundation:"Ленточный бутовый на свайном основании (тысячи лиственничных свай)",walls:"Кирпичная кладка (толщина до 20 м), облицовка гранитом рапакиви",spire:"Металлический каркас (с 1858 г.), медные листы с гальваническим золочением, 122.5 м",engineering:"Историческая дренажная система, потерны (кирпичные своды)"},
+    coords:[59.9502,30.3167],needs:["scanning","modeling"],
+    photos:["photos/petropavlovka_1.jpg","photos/petropavlovka_2.jpg","photos/petropavlovka_3.jpg"]},
+  // --- ORIGINAL 7 OBJECTS ---
+  {id:1,name:"Усадьба Гостилицы",shortName:"Гостилицы",category:"Усадьба",region:"Ленинградская область",district:"Ломоносовский район",address:"дер. Гостилицы",date:"XVIII — XIX вв.",architects:"Б.К. Миних, А.В. Квасов, А.И. Штакеншнейдер, А. Менелас",style:"Эклектика, Пейзажный парк",status:"critical",statusText:"Аварийное / Руинированное",lossPercent:"70%",protection:"Федерального значения",regNumber:"471520280450006",owner:"Российская Федерация",digitizationLevel:2,description:"За величественными руинами дворца в Гостилицах скрывается история, достойная романа. Изначально усадьбу превратил в «водное чудо» фельдмаршал Миних. В конце XIX века владельцем стал Карл Сименс — брат основателя концерна Siemens.",threats:["Атмосферные осадки","Биопоражение","Антропогенный фактор"],materials:{foundation:"Ленточный, бутовый камень",walls:"Красный глиняный кирпич ручной формовки",binding:"Известково-песчаный раствор",decor:"Штукатурка (известковая), рустовка"},coords:[59.72,29.62],needs:["scanning","modeling"],photos:[]},
+  {id:2,name:"Усадьба Пятая Гора (Церковь Троицы)",shortName:"Пятая Гора",category:"Церковь",region:"Ленинградская область",district:"Волосовский район",address:"д. Пятая Гора",date:"1827-1831 гг.",architects:"Автор не установлен (круг Н.А. Львова или Д. Висконти)",style:"Ампир (Поздний классицизм)",status:"critical",statusText:"Руинированное / Критическое",lossPercent:">60%",protection:"Федерального значения",regNumber:"471510280430026",owner:"Российская Федерация",digitizationLevel:2,description:"«Античный Колизей» в глуши Ленобласти. Храм-ротонда с 24 колоннами, больше напоминающий руины античного храма.",threats:["Обрушение колонн","Ветровая эрозия","Антропогенная нагрузка"],materials:{foundation:"Бутовый камень на известковом растворе",walls:"Местный известняк (бут)",binding:"Некачественный связующий раствор"},coords:[59.38,29.48],needs:["scanning","modeling","funding"],photos:[]},
+  {id:3,name:"Кирха в Каннельярви",shortName:"Кирха Каннельярви",category:"Кирха",region:"Ленинградская область",district:"Выборгский район",address:"пос. Победа",date:"1934 г.",architects:"Уно Ульберг",style:"Функционализм",status:"warning",statusText:"Неудовлетворительное / Аварийное",lossPercent:">70%",protection:"Регионального значения",regNumber:"471710971070005",owner:"Евангелическо-лютеранская Церковь Ингрии",digitizationLevel:3,description:"Памятник «прерванной эпохе». Построена звёздным финским архитектором Уно Ульбергом в стиле строгого функционализма.",threats:["Деструкция кирпичной кладки","Обрушение штукатурки","Грибковые поражения"],materials:{walls:"Красный кирпич с оригинальной штукатуркой",roof:"Металлическая (новодел 2010-х)"},coords:[60.38,29.35],needs:["modeling","funding"],photos:[]},
+  {id:4,name:"Усадьба Куммолово",shortName:"Куммолово",category:"Усадьба",region:"Ленинградская область",district:"Ломоносовский район",address:"урочище Куммолово",date:"1820-е годы",architects:"Предположительно В.И. Беретти",style:"Строгий классицизм",status:"critical",statusText:"Аварийное / Руинированное",lossPercent:">70%",protection:"Регионального значения",regNumber:"471711201210005",owner:"Государственная собственность",digitizationLevel:2,description:"Самый наглядный урок архитектурной анатомии. Земли были пожалованы Ивану Блюментросту — лейб-медику Петра I. Внутри здания вырос полноценный лес.",threats:["Разрушение кладки корнями деревьев","Атмосферная эрозия","Вандализм"],materials:{foundation:"Ленточный, бутовый камень",walls:"Красный глиняный кирпич",decor:"Лепные гипсовые фризы"},coords:[59.68,28.92],needs:["scanning","modeling","funding"],photos:[]},
+  {id:5,name:"Церковь Троицы в Редкино",shortName:"Троицкая церковь",category:"Церковь",region:"Ленинградская область",district:"Волосовский район",address:"д. Редкино",date:"1783-1786 гг.",architects:"И.Е. Старов или его школа",style:"Строгий классицизм",status:"warning",statusText:"Аварийное / Неудовлетворительное",lossPercent:"~50-60%",protection:"Регионального значения",regNumber:"471710971160005",owner:"РПЦ (Гатчинская епархия)",digitizationLevel:2,description:"Столичный блеск в «медвежьем углу». Образец высокого стиля, достойный центра Санкт-Петербурга.",threats:["Протечки через своды","Биопоражение","Отсутствие консервации"],materials:{foundation:"Ленточный из известняковой плиты",walls:"Красный кирпич с известковой штукатуркой",decor:"Белый камень (известняк)"},coords:[59.42,29.68],needs:["scanning","modeling"],photos:[]},
+  {id:6,name:"Усадьба Редкино",shortName:"Усадьба Редкино",category:"Усадьба",region:"Ленинградская область",district:"Волосовский район",address:"д. Редкино",date:"XVIII — нач. XX вв.",architects:"Автор не установлен",style:"Пейзажный парк",status:"critical",statusText:"Руинированное",lossPercent:">80%",protection:"Регионального значения",regNumber:"471710971160000",owner:"Государственная собственность",digitizationLevel:1,description:"Двойная жизнь дворянского гнезда — от роскоши к аскезе. Основанная баронами Черкасовыми, в конце XIX века превратилась в женскую монашескую общину.",threats:["Застройка территории","Утрата ландшафта","Разборка на стройматериалы"],materials:{walls:"Дикий камень с красным кирпичом",binding:"Известковый раствор"},coords:[59.42,29.70],needs:["scanning","modeling","funding"],photos:[]},
+  {id:7,name:"Усадьба Врангелей (Торосово)",shortName:"Усадьба Врангелей",category:"Усадьба",region:"Ленинградская область",district:"Волосовский район",address:"д. Торосово",date:"1870-е годы",architects:"Автор не установлен",style:"Неоготика",status:"critical",statusText:"Аварийное / Руинированное",lossPercent:">60%",protection:"Регионального значения",regNumber:"471710971200005",owner:"Муниципальная собственность",digitizationLevel:2,description:"Туманный Альбион посреди русских полей — настоящий средневековый замок в стиле английской готики. Родовое гнездо барона Георгия Врангеля.",threats:["Вымывание раствора","Биопоражение","Обрушение арок"],materials:{foundation:"Ленточный, валунный (гранит)",walls:"Необработанный полевой камень с кирпичом",binding:"Известково-песчаный раствор"},coords:[59.35,29.32],needs:["scanning","modeling","funding"],photos:[]}
+];
+
+const faqData=[
+  {question:"Что такое цифровой двойник объекта?",answer:"Цифровой двойник — это точная 3D-модель здания, созданная на основе лазерного сканирования. Она содержит информацию о геометрии, материалах и историческом контексте объекта."},
+  {question:"Как стать волонтёром-архитектором?",answer:"Зарегистрируйтесь на платформе, пройдите обучение по работе с 3D-сканами, выберите объект из списка и начните создавать его цифровую модель."},
+  {question:"Как проходит процесс сканирования?",answer:"Наши партнёры приезжают на объект с лазерным оборудованием, производят съёмку всех поверхностей. Результат — облако точек, которое передаётся архитекторам."},
+  {question:"Как финансово поддержать проект?",answer:"Вы можете поддержать конкретный объект или проект в целом. Средства идут на оплату сканирования, работу экспертов и развитие платформы."},
+  {question:"Сколько времени занимает оцифровка?",answer:"В среднем от 1 до 3 месяцев. Сканирование — от нескольких дней до недели, создание модели — от 3 до 8 недель."},
+  {question:"Какие объекты можно добавить?",answer:"Любые объекты культурного наследия России. Вы можете подать заявку на добавление объекта, и после проверки он появится в базе."}
+];
+
+// ═══════════ CONTEXT ═══════════
+const AppContext=createContext();
+const useApp=()=>useContext(AppContext);
+const AppProvider=({children})=>{
+  const[currentPage,setCurrentPage]=useState('home');
+  const[selectedObject,setSelectedObject]=useState(null);
+  const[modalOpen,setModalOpen]=useState(false);
+  const[modalType,setModalType]=useState(null);
+  const[notification,setNotification]=useState(null);
+  const[searchQuery,setSearchQuery]=useState('');
+  const[filterStatus,setFilterStatus]=useState('all');
+  const[filterNeed,setFilterNeed]=useState('all');
+  const navigate=(page,data)=>{setCurrentPage(page);if(data)setSelectedObject(data);window.scrollTo({top:0,behavior:'smooth'})};
+  const openModal=(type)=>{setModalType(type);setModalOpen(true)};
+  const closeModal=()=>{setModalOpen(false);setModalType(null)};
+  const showNotification=(msg,type='info')=>{setNotification({message:msg,type});setTimeout(()=>setNotification(null),4000)};
+  return <AppContext.Provider value={{currentPage,navigate,objects:objectsData,faq:faqData,selectedObject,setSelectedObject,modalOpen,modalType,openModal,closeModal,notification,showNotification,searchQuery,setSearchQuery,filterStatus,setFilterStatus,filterNeed,setFilterNeed}}>{children}</AppContext.Provider>;
+};
+
+// ═══════════ THREE.JS VIEWER ═══════════
+const HeritageViewer=({seed=11,height=260,className=''})=>{
+  const canvasRef=useRef(null),cleanupRef=useRef(null);
+  useEffect(()=>{
+    const canvas=canvasRef.current;if(!canvas)return;
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.1,100);
+    camera.position.set(0,1.2,8.2);
+    scene.add(new THREE.AmbientLight(0xffffff,.55));
+    const key=new THREE.DirectionalLight(0xffffff,.85);key.position.set(3,6,4);scene.add(key);
+    const rim=new THREE.DirectionalLight(0xffffff,.35);rim.position.set(-5,2,-4);scene.add(rim);
+    const group=buildHeritageSilhouette(seed);
+    const mat=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.1,roughness:.4,transparent:true,opacity:.85,wireframe:true});
+    group.traverse(o=>{if(o.isMesh)o.material=mat});scene.add(group);
+    let raf=0;const clock=new THREE.Clock();
+    const resize=()=>{const{width,height}=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(width)),h=Math.max(1,Math.floor(height));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
+    const onMove=e=>{const rect=canvas.getBoundingClientRect();const ex=e.touches?e.touches[0].clientX:e.clientX;const ey=e.touches?e.touches[0].clientY:e.clientY;const x=(ex-rect.left)/rect.width,y=(ey-rect.top)/rect.height;group.rotation.y=(x-.5)*.9;group.rotation.x=(y-.5)*.25};
+    const animate=()=>{const t=clock.getElapsedTime();group.position.y=Math.sin(t*.8)*.05;group.rotation.z=Math.sin(t*.3)*.04;renderer.render(scene,camera);raf=requestAnimationFrame(animate)};
+    resize();window.addEventListener('resize',resize);canvas.addEventListener('mousemove',onMove);canvas.addEventListener('touchmove',onMove,{passive:true});
+    raf=requestAnimationFrame(animate);
+    cleanupRef.current=()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',resize);canvas.removeEventListener('mousemove',onMove);canvas.removeEventListener('touchmove',onMove);renderer.dispose();scene.clear()};
+    return()=>{if(cleanupRef.current)cleanupRef.current()};
+  },[seed]);
+  return <div className={`viewer-3d ${className}`} style={{height}}><canvas ref={canvasRef} style={{width:'100%',height:'100%'}}/><span className="viewer-label">interactive</span><span className="viewer-label-left">3D‑просмотр</span></div>;
+};
+
+// ═══════════ SMART PHOTO (loads real or shows gradient) ═══════════
+const SmartPhoto=({src,objectId,height=176,children})=>{
+  const[loaded,setLoaded]=useState(false);
+  const[error,setError]=useState(false);
+  const grad=photoGradients[(objectId-1)%photoGradients.length];
+  return(
+    <div className="photo-placeholder" style={{height,background:(!loaded||error)?grad:'#000'}}>
+      {src&&!error&&<img src={src} alt="" onLoad={()=>setLoaded(true)} onError={()=>setError(true)} style={{opacity:loaded?1:0,transition:'opacity .3s'}}/>}
+      {(!loaded||error)&&<div className="photo-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.25)" strokeWidth="1.5"><rect x="2" y="3" width="20" height="18" rx="3"/><circle cx="8.5" cy="10" r="2.5"/><path d="M22 17l-5.5-6L10 17.5 7 14l-5 5"/></svg></div>}
+      <div className="photo-overlay"></div>
+      {children}
+    </div>
+  );
+};
+
+// ═══════════ REUSABLE ═══════════
+const GlassCard=({children,className='',onClick,style})=><div className={`glass-card ${className}`} onClick={onClick} style={style}>{children}</div>;
+const SectionHeader=({kicker,title,desc})=><div className="section-header">{kicker&&<div className="section-kicker">{kicker}</div>}<h2 className="section-title">{title}</h2>{desc&&<p className="section-desc">{desc}</p>}</div>;
+
+// ═══════════ HEADER ═══════════
+const Header=()=>{
+  const{navigate,currentPage,openModal}=useApp();
+  const[scrolled,setScrolled]=useState(false);
+  const[menuOpen,setMenuOpen]=useState(false);
+  useEffect(()=>{const h=()=>setScrolled(window.scrollY>50);window.addEventListener('scroll',h);return()=>window.removeEventListener('scroll',h)},[]);
+  const navItems=[{id:'about',label:'О проекте'},{id:'objects',label:'Объекты'},{id:'map',label:'Карта'},{id:'needs',label:'Потребности'},{id:'workflow',label:'Процесс'},{id:'guides',label:'Инструкции'}];
+  return(
+    <header className={`site-header ${scrolled?'scrolled':''}`}><div className="header-inner">
+      <a className="logo" onClick={()=>{navigate('home');setMenuOpen(false)}}><div className="logo-dot"></div><span className="logo-text">ЦАН</span></a>
+      <nav className={`nav ${menuOpen?'open':''}`}>
+        {navItems.map(i=><a key={i.id} className={`nav-link ${currentPage===i.id?'active':''}`} onClick={()=>{navigate(i.id);setMenuOpen(false)}}>{i.label}</a>)}
+        <a className="btn btn-pill" onClick={()=>{openModal('participate');setMenuOpen(false)}}>Присоединиться</a>
+      </nav>
+      <button className="mobile-toggle" onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen?'×':'≡'}</button>
+    </div></header>
+  );
+};
+
+// ═══════════ HERO ═══════════
+const HeroSection=()=>{
+  const{navigate,openModal,objects}=useApp();
+  return(
+    <section className="hero-section">
+      <div className="hero-bg" style={{position:'absolute',inset:0}}></div>
+      <div className="vignette" style={{position:'absolute',inset:0,pointerEvents:'none'}}></div>
+      <div className="hero-3d-card">
+        <div className="hero-3d-header"><span>3D‑превью</span><span>interactive</span></div>
+        <div className="hero-3d-viewer"><HeritageViewer seed={33} height={240}/></div>
+      </div>
+      <div className="hero-content anim-fade">
+        <div className="hero-pill"><span className="hero-pill-dot"></span>Инициатива по цифровому сохранению ОКН</div>
+        <h1 className="hero-title">Цифровое<br/><span>Архитектурное</span><br/>Наследие</h1>
+        <p className="hero-subtitle">Создаём цифровые двойники объектов культурного наследия России. Сохраняем историю для будущих поколений силами сообщества архитекторов, экспертов и волонтёров.</p>
+        <div className="hero-buttons">
+          <button className="btn btn-solid" onClick={()=>navigate('objects')}>Смотреть объекты</button>
+          <button className="btn btn-ghost" onClick={()=>openModal('participate')}>Присоединиться</button>
+        </div>
+        <div className="hero-stats">
+          {[{n:'158 168',l:'ОКН в России',s:'По данным Минкультуры РФ'},{n:String(objects.length),l:'Оцифровано',s:'Пилотные объекты'},{n:'100',l:'Цель на 5 лет',s:'2026–2030'}].map((x,i)=>(
+            <GlassCard key={i} style={{padding:'20px'}}>
+              <div style={{fontSize:'28px',fontWeight:600,letterSpacing:'-.02em'}}>{x.n}</div>
+              <div style={{marginTop:'4px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{x.l}</div>
+              <div style={{marginTop:'8px',fontSize:'12px',color:'rgba(11,11,14,.55)'}}>{x.s}</div>
+            </GlassCard>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ═══════════ OBJECT CARD (photo only) ═══════════
+const ObjectCard=({object,idx=0})=>{
+  const{navigate,setSelectedObject}=useApp();
+  const click=()=>{setSelectedObject(object);navigate('object-detail',object)};
+  const mainPhoto=object.photos&&object.photos.length>0?object.photos[0]:null;
+  return(
+    <GlassCard className={`object-card anim-fade anim-d${Math.min(idx+1,6)}`} style={{padding:'20px'}} onClick={click}>
+      <SmartPhoto src={mainPhoto} objectId={object.id} height={176}>
+        <div className="photo-badge"><span className={`badge ${object.status}`} style={{fontSize:'11px'}}>{object.status==='critical'?'Критическое':object.status==='warning'?'Аварийное':'Хорошее'}</span></div>
+        <span className="photo-type">{object.category}</span>
+      </SmartPhoto>
+      <div style={{marginTop:'16px'}}>
+        <div style={{fontSize:'18px',fontWeight:600,lineHeight:1.3}}>{object.shortName}</div>
+        <div style={{marginTop:'6px',fontSize:'13px',color:'rgba(11,11,14,.55)'}}>{object.district} · {object.style}</div>
+        <p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)',lineHeight:1.6,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{object.description}</p>
+        <div style={{marginTop:'16px'}}><span className="btn btn-solid" style={{fontSize:'13px',padding:'6px 14px'}}>Открыть карточку</span></div>
+      </div>
+    </GlassCard>
+  );
+};
+
+// ═══════════ SECTIONS ═══════════
+const ObjectsSection=({limit})=>{
+  const{objects,navigate}=useApp();
+  const display=limit?objects.slice(0,limit):objects;
+  return<div><SectionHeader kicker="Каталог" title="Объекты культурного наследия" desc="Исследуйте памятники архитектуры и их цифровые двойники."/>
+    <div className="cards-grid cols-3">{display.map((o,i)=><ObjectCard key={o.id} object={o} idx={i}/>)}</div>
+    {limit&&<div style={{marginTop:'32px'}}><button className="btn btn-pill" onClick={()=>navigate('objects')}>Перейти в каталог →</button></div>}
+  </div>;
+};
+
+const MapSection=({fullPage})=>{
+  const{objects,setSelectedObject,navigate}=useApp();
+  const mapRef=useRef(null),mapInst=useRef(null);
+  useEffect(()=>{
+    if(!mapRef.current||mapInst.current)return;
+    const map=L.map(mapRef.current,{attributionControl:false}).setView([59.92,30.1],9);
+    L.control.attribution({prefix:false}).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap, © CartoDB',maxZoom:19}).addTo(map);
+    mapInst.current=map;
+    objects.forEach(o=>{
+      const m=L.marker(o.coords).addTo(map);
+      m.bindPopup(`<div style="min-width:180px;font-family:system-ui"><strong>${o.shortName}</strong><br/><span style="font-size:12px;color:#666">${o.category} · ${o.district}</span></div>`);
+      m.on('click',()=>setSelectedObject(o));
+    });
+    return()=>{if(mapInst.current){mapInst.current.remove();mapInst.current=null}};
+  },[]);
+  return<div><SectionHeader kicker="География" title="Карта объектов" desc="Интерактивная карта объектов культурного наследия."/>
+    <GlassCard style={{overflow:'hidden'}}><div className={`map-wrapper ${fullPage?'fullpage':''}`}><div id="map" ref={mapRef}></div></div></GlassCard>
+  </div>;
+};
+
+const RolesSection=()=>{
+  const{openModal}=useApp();
+  const roles=[{t:"Архитектор",d:"Создавайте 3D-модели на основе сканов.",a:"architect"},{t:"Сканировщик",d:"Проводите лазерное сканирование объектов.",a:"scanner"},{t:"Инвестор",d:"Поддержите оцифровку объектов финансово.",a:"investor"},{t:"Эксперт",d:"Проверяйте качество моделей и консультируйте.",a:"expert"}];
+  return<div><SectionHeader kicker="Участие" title="Как присоединиться к проекту" desc="Выберите свою роль в создании цифрового наследия России"/>
+    <div className="cards-grid cols-4">{roles.map((r,i)=><GlassCard key={i} style={{padding:'24px',cursor:'pointer'}} onClick={()=>openModal(r.a)}>
+      <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'#F54738',marginBottom:'16px',opacity:.85}}></div>
+      <div style={{fontSize:'16px',fontWeight:600}}>{r.t}</div>
+      <p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{r.d}</p>
+      <button className="btn btn-ghost" style={{marginTop:'16px',fontSize:'13px'}}>Подробнее</button>
+    </GlassCard>)}</div>
+  </div>;
+};
+
+const ProcessSection=()=>{
+  const steps=[{n:"01",t:"Выбор объекта",d:"Объект выбирается путём голосования или заявки."},{n:"02",t:"Сканирование",d:"Команда создаёт облако точек лазерным сканером."},{n:"03",t:"Моделирование",d:"Архитекторы создают 3D-модель на основе скана."},{n:"04",t:"Проверка",d:"Эксперты проверяют точность и историческое соответствие."},{n:"05",t:"Публикация",d:"Модель публикуется с паспортом и указанием авторов."}];
+  return<div><SectionHeader kicker="Методология" title="Как создаются цифровые двойники" desc="От выбора объекта до публикации на платформе"/>
+    <div className="cards-grid cols-2">{steps.map((s,i)=><GlassCard key={s.n} className={`anim-fade anim-d${i+1}`} style={{padding:'24px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',gap:'12px'}}><div style={{fontSize:'18px',fontWeight:600}}>{s.t}</div><div style={{fontSize:'14px',color:'rgba(11,11,14,.45)'}}>{s.n}</div></div>
+      <p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{s.d}</p>
+    </GlassCard>)}</div>
+  </div>;
+};
+
+const FAQSection=()=>{
+  const{faq}=useApp();const[openIdx,setOpenIdx]=useState(null);
+  return<div><SectionHeader kicker="Вопросы" title="Часто задаваемые вопросы"/>
+    <div style={{maxWidth:'800px',margin:'0 auto'}}>{faq.map((item,idx)=><div key={idx} className={`faq-item ${openIdx===idx?'open':''}`}>
+      <div className="faq-question" onClick={()=>setOpenIdx(openIdx===idx?null:idx)}>{item.question}<span className="faq-icon">+</span></div>
+      <div className="faq-answer"><div className="faq-answer-inner">{item.answer}</div></div>
+    </div>)}</div>
+  </div>;
+};
+
+// ═══════════ FOOTER ═══════════
+const Footer=()=>{
+  const{navigate}=useApp();
+  return<footer className="site-footer"><div className="footer-inner">
+    <div className="footer-top">
+      <div><div className="footer-brand-text">Цифровое архитектурное наследие</div><div className="footer-brand-desc">Платформа для создания и сохранения цифровых двойников объектов культурного наследия.</div></div>
+      <div className="footer-links-row">
+        {[['about','О проекте'],['objects','Каталог'],['map','Карта'],['guides','Инструкции'],['contact','Контакты']].map(([id,l])=><a key={id} className="btn btn-ghost" onClick={()=>navigate(id)}>{l}</a>)}
+      </div>
+    </div>
+    <div className="footer-copy">© 2026 Цифровое Архитектурное Наследие России • Не является официальным ресурсом органов власти.</div>
+  </div></footer>;
+};
+
+// ═══════════ MODAL ═══════════
+const Modal=()=>{
+  const{modalOpen,modalType,closeModal,showNotification}=useApp();
+  const[fd,setFd]=useState({name:'',email:'',phone:'',role:'',message:''});
+  if(!modalOpen)return null;
+  const submit=e=>{e.preventDefault();showNotification('Заявка отправлена!','success');closeModal();setFd({name:'',email:'',phone:'',role:'',message:''})};
+  const titles={participate:'Присоединиться к проекту',architect:'Стать архитектором',scanner:'Стать сканировщиком',investor:'Поддержать проект',expert:'Стать экспертом',scan:'Заявка на сканирование',model:'Заявка на моделирование',support:'Поддержать объект'};
+  return<div className="modal-overlay" onClick={closeModal}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <div className="modal-header"><h2 className="modal-title">{titles[modalType]||'Форма заявки'}</h2><button className="modal-close" onClick={closeModal}>×</button></div>
+    <div className="modal-body"><form onSubmit={submit}>
+      <div className="form-group"><label className="form-label">Ваше имя *</label><input type="text" className="input" required value={fd.name} onChange={e=>setFd({...fd,name:e.target.value})}/></div>
+      <div className="form-group"><label className="form-label">Email *</label><input type="email" className="input" required value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
+      <div className="form-group"><label className="form-label">Телефон</label><input type="tel" className="input" value={fd.phone} onChange={e=>setFd({...fd,phone:e.target.value})}/></div>
+      {modalType==='participate'&&<div className="form-group"><label className="form-label">Роль *</label><select className="input" required value={fd.role} onChange={e=>setFd({...fd,role:e.target.value})}><option value="">Выберите...</option><option value="architect">Архитектор</option><option value="scanner">Сканировщик</option><option value="investor">Инвестор</option><option value="expert">Эксперт</option></select></div>}
+      <div className="form-group"><label className="form-label">Сообщение</label><textarea className="input" value={fd.message} onChange={e=>setFd({...fd,message:e.target.value})}/></div>
+      <button type="submit" className="btn btn-solid" style={{width:'100%'}}>Отправить заявку</button>
+    </form></div>
+  </div></div>;
+};
+
+const Notification=()=>{const{notification}=useApp();if(!notification)return null;return<div className={`notification ${notification.type}`}>{notification.message}</div>};
+
+// ═══════════════════ PAGES ═══════════════════
+const HomePage=()=>{
+  const{openModal,navigate}=useApp();
+  return<div style={{display:'flex',flexDirection:'column',gap:'64px',paddingTop:'40px'}}>
+    <HeroSection/>
+    <ObjectsSection limit={3}/>
+    <RolesSection/>
+    <ProcessSection/>
+    <FAQSection/>
+    <GlassCard style={{padding:'28px'}}>
+      <div style={{display:'flex',flexWrap:'wrap',gap:'24px',alignItems:'center',justifyContent:'space-between'}}>
+        <div><div style={{fontSize:'22px',fontWeight:600}}>Нужны архитекторы, волонтёры и партнёры</div><p style={{marginTop:'12px',color:'rgba(11,11,14,.70)',fontSize:'15px'}}>Присоединяйтесь и помогите сохранить культурное наследие.</p></div>
+        <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}><button className="btn btn-solid" onClick={()=>openModal('participate')}>Оставить заявку</button><button className="btn btn-ghost" onClick={()=>navigate('workflow')}>Процесс</button></div>
+      </div>
+    </GlassCard>
+  </div>;
+};
+
+const AboutPage=()=>{
+  const{navigate,openModal}=useApp();
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'64px'}}>
+    <div><div className="section-kicker">О проекте</div><h1 className="section-title" style={{fontSize:'clamp(2rem,5vw,3.5rem)'}}>Цифровое Архитектурное<br/>Наследие России</h1><p className="section-desc">Создаём единую базу цифровых двойников силами сообщества</p></div>
+    <div className="cards-grid cols-3">{[{t:'Миссия',d:'Воссоздание в цифре всех объектов культурного наследия России.'},{t:'Видение',d:'Единая база данных, где каждый объект сохранён навечно.'},{t:'Ценности',d:'Открытость, сотрудничество, сохранение исторической памяти.'}].map((c,i)=><GlassCard key={i} style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>{c.t}</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{c.d}</p></GlassCard>)}</div>
+    <div><SectionHeader kicker="Проблема" title="Почему это важно"/>
+      <div className="cards-grid cols-3">{[{t:'Физический износ',d:'Тысячи объектов в аварийном состоянии.'},{t:'Нет данных для реставрации',d:'Многие объекты не имеют обмеров.'},{t:'Недостаток финансирования',d:'Государство не может поддерживать все 158 000+ объектов.'}].map((c,i)=><GlassCard key={i} style={{padding:'24px'}}><div style={{fontSize:'16px',fontWeight:600}}>{c.t}</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{c.d}</p></GlassCard>)}</div></div>
+    <GlassCard style={{padding:'28px'}}><div style={{display:'flex',flexWrap:'wrap',gap:'16px',alignItems:'center',justifyContent:'space-between'}}><div><div style={{fontSize:'14px',fontWeight:600}}>Связаться по партнёрству</div></div><div style={{display:'flex',gap:'12px'}}><button className="btn btn-solid" onClick={()=>openModal('participate')}>Написать</button><button className="btn btn-ghost" onClick={()=>navigate('objects')}>Объекты</button></div></div></GlassCard>
+  </div>;
+};
+
+const ObjectsPage=()=>{
+  const{objects,searchQuery,setSearchQuery,filterStatus,setFilterStatus}=useApp();
+  const filtered=objects.filter(o=>{const ms=o.name.toLowerCase().includes(searchQuery.toLowerCase())||o.district.toLowerCase().includes(searchQuery.toLowerCase())||o.category.toLowerCase().includes(searchQuery.toLowerCase());return ms&&(filterStatus==='all'||o.status===filterStatus)});
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'24px'}}>
+    <SectionHeader kicker="Каталог" title="Все объекты" desc="Памятники архитектуры Санкт-Петербурга и Ленинградской области"/>
+    <div className="search-box"><input type="text" className="search-input" placeholder="Поиск по названию, району или категории..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}/><button className="btn btn-solid">Найти</button></div>
+    <div className="filters">{[['all','Все'],['good','Хорошее'],['warning','Аварийное'],['critical','Критическое']].map(([v,l])=><button key={v} className={`filter-btn ${filterStatus===v?'active':''}`} onClick={()=>setFilterStatus(v)}>{l}</button>)}</div>
+    {filtered.length>0?<div className="cards-grid cols-2">{filtered.map((o,i)=><ObjectCard key={o.id} object={o} idx={i}/>)}</div>:<div className="empty-state"><div className="empty-title">Не найдено</div><p className="empty-desc">Измените параметры поиска</p></div>}
+  </div>;
+};
+
+// ═══════════ OBJECT DETAIL ═══════════
+const ObjectDetailPage=()=>{
+  const{selectedObject:obj,openModal,navigate}=useApp();
+  const[mainPhotoIdx,setMainPhotoIdx]=useState(0);
+  if(!obj)return<div className="page-top"><div className="empty-state"><div className="empty-title">Объект не выбран</div><button className="btn btn-solid" onClick={()=>navigate('objects')} style={{marginTop:'24px'}}>К каталогу</button></div></div>;
+  const levels=['Базовый','Расширенный','Технический','Музейный'];
+  const matLabels={foundation:'Фундамент',walls:'Стены',binding:'Связующее',decor:'Декор',roof:'Кровля',floors:'Перекрытия',interiors:'Интерьеры',spire:'Шпиль',engineering:'Инженерные системы'};
+  const fallbackSeed=Array.from(obj.name).reduce((a,c)=>a+c.charCodeAt(0),0);
+  const mainPhoto=obj.photos&&obj.photos.length>0?obj.photos[mainPhotoIdx]:null;
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'24px'}}>
+    <div style={{display:'flex',flexWrap:'wrap',justifyContent:'space-between',alignItems:'flex-start',gap:'16px'}}>
+      <div><div style={{fontSize:'14px',color:'rgba(11,11,14,.60)'}}>Каталог / {obj.category}</div><h1 className="section-title" style={{marginTop:'8px'}}>{obj.name}</h1>
+        <div style={{marginTop:'12px',display:'flex',flexWrap:'wrap',gap:'8px',alignItems:'center'}}><span className={`badge ${obj.status}`}>{obj.statusText}</span><span style={{fontSize:'14px',color:'rgba(11,11,14,.70)'}}>· {obj.district}, {obj.address}</span></div>
+      </div>
+      <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}><button className="btn btn-ghost" onClick={()=>navigate('objects')}>← Назад</button><button className="btn btn-solid" onClick={()=>openModal('scan')}>Заявка</button></div>
+    </div>
+    <div className="detail-grid">
+      <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+        <SmartPhoto src={mainPhoto} objectId={obj.id} height={280}/>
+        {obj.photos&&obj.photos.length>1&&<div className="photo-gallery">
+          {obj.photos.map((p,i)=><div key={i} className={`photo-gallery-item ${mainPhotoIdx===i?'active':''}`} onClick={()=>setMainPhotoIdx(i)}>
+            <SmartPhoto src={p} objectId={obj.id} height={100}/>
+          </div>)}
+        </div>}
+        <GlassCard style={{padding:'16px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+            <div style={{fontSize:'14px',fontWeight:600}}>3D‑просмотр</div>
+            <div style={{fontSize:'11px',color:'rgba(11,11,14,.45)'}}>interactive</div>
+          </div>
+          <HeritageViewer seed={fallbackSeed} height={260}/>
+        </GlassCard>
+        <GlassCard style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>Описание</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)',lineHeight:1.7}}>{obj.description}</p></GlassCard>
+        <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}><button className="btn btn-solid" onClick={()=>openModal('scan')}>Заявка на сканирование</button><button className="btn btn-ghost" onClick={()=>openModal('model')}>Моделирование</button><button className="btn btn-ghost" onClick={()=>openModal('support')}>Поддержать</button></div>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+        <GlassCard style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>Уровень оцифровки</div>
+          <div className="digit-bar">{[1,2,3,4].map(l=><div key={l} className={`digit-level ${l<=obj.digitizationLevel?'active':''}`}></div>)}</div>
+          <div className="digit-labels">{levels.map((l,i)=><span key={i}>{l}</span>)}</div>
+        </GlassCard>
+        <GlassCard style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>Паспорт объекта</div>
+          <div style={{marginTop:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
+            {[['Категория охраны',obj.protection],['Рег. номер',obj.regNumber],['Собственник',obj.owner],['Архитекторы',obj.architects],['Стиль',obj.style],['Датировка',obj.date],['Степень утраты',obj.lossPercent]].map(([l,v])=>
+              <div key={l}><div style={{fontSize:'12px',color:'rgba(11,11,14,.55)'}}>{l}</div><div style={{fontSize:'14px',color:'rgba(11,11,14,.85)',marginTop:'2px'}}>{v}</div></div>
+            )}
+          </div>
+        </GlassCard>
+        {obj.materials&&<GlassCard style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>Материалы и конструктив</div>
+          <div style={{marginTop:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
+            {Object.entries(obj.materials).map(([k,v])=><div key={k}><div style={{fontSize:'12px',color:'rgba(11,11,14,.55)'}}>{matLabels[k]||k}</div><div style={{fontSize:'14px',color:'rgba(11,11,14,.85)',marginTop:'2px'}}>{v}</div></div>)}
+          </div>
+        </GlassCard>}
+        {obj.threats&&<GlassCard style={{padding:'24px'}}><div style={{fontSize:'14px',fontWeight:600}}>Основные угрозы</div>
+          <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}>{obj.threats.map((t,i)=><span key={i} className="badge" style={{background:'rgba(245,71,56,.08)',borderColor:'rgba(245,71,56,.15)'}}>{t}</span>)}</div>
+        </GlassCard>}
+      </div>
+    </div>
+  </div>;
+};
+
+const MapPage=()=><div className="page-top"><MapSection fullPage/></div>;
+
+const NeedsPage=()=>{
+  const{objects,filterNeed,setFilterNeed,setSelectedObject,navigate}=useApp();
+  const needLabels={scanning:'Сканирование',modeling:'Моделирование',funding:'Финансирование'};
+  const filtered=objects.filter(o=>filterNeed==='all'||o.needs.includes(filterNeed));
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'24px'}}>
+    <SectionHeader kicker="Потребности" title="Объекты, которым нужна помощь" desc="Выберите, как вы можете помочь."/>
+    <div className="filters">{[['all','Все'],['scanning','Сканирование'],['modeling','Моделирование'],['funding','Финансирование']].map(([v,l])=><button key={v} className={`filter-btn ${filterNeed===v?'active':''}`} onClick={()=>setFilterNeed(v)}>{l}</button>)}</div>
+    <div className="cards-grid cols-2">{filtered.map((o,i)=>
+      <GlassCard key={o.id} className="object-card" style={{padding:'20px'}} onClick={()=>{setSelectedObject(o);navigate('object-detail')}}>
+        <SmartPhoto src={o.photos&&o.photos[0]} objectId={o.id} height={160}>
+          <div className="photo-badge"><span className={`badge ${o.status}`} style={{fontSize:'11px'}}>{o.statusText}</span></div>
+        </SmartPhoto>
+        <div style={{marginTop:'16px'}}><div style={{fontSize:'16px',fontWeight:600}}>{o.shortName}</div>
+          <div style={{marginTop:'12px',display:'flex',gap:'6px',flexWrap:'wrap'}}>{o.needs.map((n,i)=><span key={i} className="badge">{needLabels[n]}</span>)}</div>
+        </div>
+      </GlassCard>
+    )}</div>
+  </div>;
+};
+
+const WorkflowPage=()=><div className="page-top" style={{display:'flex',flexDirection:'column',gap:'64px'}}>
+  <ProcessSection/>
+  <div><SectionHeader kicker="Уровни оцифровки" title="Глубина проработки модели"/>
+    <div className="cards-grid cols-2">{[{t:'Базовый',d:'Внешний облик, скан фасадов, основные габариты.'},{t:'Расширенный',d:'Внешний + внутренний облик, детализация декора.'},{t:'Технический',d:'Полные данные для реставрации, обмерные чертежи.'},{t:'Музейный',d:'3D-туры, историческая реконструкция, полная документация.'}].map((x,i)=><GlassCard key={i} style={{padding:'24px'}}><div style={{fontSize:'16px',fontWeight:600}}>{x.t}</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{x.d}</p></GlassCard>)}</div>
+  </div>
+</div>;
+
+const GuidesPage=()=>{
+  const guides=[{t:'Инструкция для сканировщиков',d:'Подготовка оборудования, методика, обработка данных.'},{t:'Инструкция для архитекторов',d:'Работа с облаком точек, требования к детализации.'},{t:'Руководство по валидации',d:'Проверка качества моделей, критерии приёмки.'},{t:'Заполнение паспорта объекта',d:'Структура паспорта, источники информации.'},{t:'Работа с платформой',d:'Регистрация, подача заявок, отслеживание статуса.'},{t:'Обучающие материалы',d:'Видеоуроки, вебинары, мастер-классы.'}];
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'24px'}}>
+    <SectionHeader kicker="Документация" title="Инструкции и руководства" desc="Подробные материалы для участников"/>
+    <div className="cards-grid cols-3">{guides.map((g,i)=><GlassCard key={i} style={{padding:'24px'}}><div style={{width:'36px',height:'36px',borderRadius:'10px',background:'rgba(245,71,56,.1)',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{width:'14px',height:'14px',borderRadius:'3px',background:'#F54738',opacity:.6}}></div></div><div style={{fontSize:'16px',fontWeight:600}}>{g.t}</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{g.d}</p><a href="#" className="btn btn-ghost" style={{marginTop:'16px',fontSize:'13px'}}>Читать →</a></GlassCard>)}</div>
+  </div>;
+};
+
+const FAQPage=()=><div className="page-top"><FAQSection/></div>;
+
+const ContactPage=()=>{
+  const{showNotification}=useApp();const[fd,setFd]=useState({name:'',email:'',message:''});
+  const submit=e=>{e.preventDefault();showNotification('Сообщение отправлено!','success');setFd({name:'',email:'',message:''})};
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'24px'}}>
+    <SectionHeader kicker="Связь" title="Свяжитесь с нами" desc="Есть вопросы или предложения?"/>
+    <div className="contact-grid">
+      <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+        {[{i:'📧',t:'Email',v:'info@heritage.ru'},{i:'📞',t:'Телефон',v:'+7 (812) 123-45-67'},{i:'📍',t:'Адрес',v:'Санкт-Петербург, Россия'},{i:'💬',t:'Telegram',v:'@heritage_rf'}].map((c,i)=><GlassCard key={i} style={{padding:'16px',display:'flex',gap:'16px',alignItems:'center'}}><div style={{fontSize:'20px',width:'40px',height:'40px',borderRadius:'10px',background:'rgba(245,71,56,.08)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{c.i}</div><div><div style={{fontSize:'12px',color:'rgba(11,11,14,.55)'}}>{c.t}</div><div style={{fontSize:'14px',fontWeight:500,marginTop:'2px'}}>{c.v}</div></div></GlassCard>)}
+      </div>
+      <GlassCard style={{padding:'28px'}}><form onSubmit={submit}>
+        <div className="form-group"><label className="form-label">Имя *</label><input type="text" className="input" required value={fd.name} onChange={e=>setFd({...fd,name:e.target.value})}/></div>
+        <div className="form-group"><label className="form-label">Email *</label><input type="email" className="input" required value={fd.email} onChange={e=>setFd({...fd,email:e.target.value})}/></div>
+        <div className="form-group"><label className="form-label">Сообщение *</label><textarea className="input" required value={fd.message} onChange={e=>setFd({...fd,message:e.target.value})}/></div>
+        <button type="submit" className="btn btn-solid" style={{width:'100%'}}>Отправить</button>
+      </form></GlassCard>
+    </div>
+  </div>;
+};
+
+const ParticipatePage=()=>{
+  const{openModal}=useApp();
+  return<div className="page-top" style={{display:'flex',flexDirection:'column',gap:'64px'}}>
+    <RolesSection/>
+    <div><SectionHeader kicker="Мотивация" title="Что вы получите"/>
+      <div className="cards-grid cols-3">{[{t:'Статус цифрового автора',d:'Ваше имя навсегда связано с объектом.'},{t:'Доступ к обучению',d:'Бесплатное обучение 3D-моделированию.'},{t:'Сообщество',d:'Присоединяйтесь к профессионалам отрасли.'}].map((c,i)=><GlassCard key={i} style={{padding:'24px'}}><div style={{fontSize:'16px',fontWeight:600}}>{c.t}</div><p style={{marginTop:'12px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{c.d}</p></GlassCard>)}</div>
+      <div style={{textAlign:'center',marginTop:'32px'}}><button className="btn btn-solid" onClick={()=>openModal('participate')}>Подать заявку</button></div>
+    </div>
+  </div>;
+};
+
+// ═══════════ APP ═══════════
+const App=()=>{
+  const ctx=useApp();
+  const pages={home:HomePage,about:AboutPage,objects:ObjectsPage,'object-detail':ObjectDetailPage,map:MapPage,needs:NeedsPage,workflow:WorkflowPage,guides:GuidesPage,faq:FAQPage,contact:ContactPage,participate:ParticipatePage};
+  const Page=pages[ctx.currentPage]||HomePage;
+  return<div style={{minHeight:'100dvh',background:'#F6F7FB',color:'#0B0B0E'}}><div className="bg-grid">
+    <div className="noise" aria-hidden="true"></div>
+    <Header/><main className="container" style={{paddingBottom:'96px'}}><Page/></main><Footer/><Modal/><Notification/>
+  </div></div>;
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<AppProvider><App/></AppProvider>);
+</script>
+</body>
+</html>
