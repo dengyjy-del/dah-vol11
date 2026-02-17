@@ -359,7 +359,7 @@ const HeroSection=()=>{
           <button className="btn btn-ghost" onClick={()=>openModal('participate')}>Присоединиться</button>
         </div>
         <div className="hero-stats">
-          {[{n:'158 168',l:'ОКН в России',s:'По данным Минкультуры РФ'},{n:String(objects.length),l:'Оцифровано',s:'Пилотные объекты'},{n:'100',l:'Цель на 5 лет',s:'2026–2030'}].map((x,i)=>(
+          {[{s:'Старт', n:'Санкт‑Петербург и Ленобласть',l:'Пилотные объекты, методика, критерии качества.'},{s:'Цель', n:'100 объектов за 2026–2030',l:'С фокусом на фасадные модели и ключевые детали.'},{s:'Механизм', n:'Сообщество «цифровых архитекторов»',l:'Отбор, распределение задач, публикация на платформе.'}].map((x,i)=>(
             <GlassCard key={i} style={{padding:'20px'}}>
               <div style={{fontSize:'28px',fontWeight:600,letterSpacing:'-.02em'}}>{x.n}</div>
               <div style={{marginTop:'4px',fontSize:'14px',color:'rgba(11,11,14,.70)'}}>{x.l}</div>
